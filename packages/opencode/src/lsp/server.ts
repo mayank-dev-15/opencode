@@ -1294,8 +1294,14 @@ export const KotlinLS: Info = {
     if (!installed) {
       if (flags.disableLspDownload) return
 
-      const releaseResponse = await fetch("https://api.github.com/repos/Kotlin/kotlin-lsp/releases/latest")
-      if (!releaseResponse.ok) {
+      const releaseResponse = await fetch("https://api.github.com/repos/Kotlin/kotlin-lsp/releases/latest").catch(
+        (error) => {
+          console.warn(`kotlin-ls: failed to fetch latest release info: ${error}`)
+          return undefined
+        },
+      )
+      if (!releaseResponse || !releaseResponse.ok) {
+        console.warn(`kotlin-ls: GitHub API returned ${releaseResponse?.status ?? "network error"}, cannot install`)
         return
       }
 
@@ -1303,6 +1309,7 @@ export const KotlinLS: Info = {
       const version = release.name?.replace(/^v/, "")
 
       if (!version) {
+        console.warn("kotlin-ls: could not parse version from release metadata")
         return
       }
 
@@ -1323,6 +1330,7 @@ export const KotlinLS: Info = {
       const combo = `${kotlinPlatform}-${kotlinArch}`
 
       if (!supportedCombos.includes(combo)) {
+        console.warn(`kotlin-ls: unsupported platform combo "${combo}", supported: ${supportedCombos.join(", ")}`)
         return
       }
 
@@ -1331,23 +1339,33 @@ export const KotlinLS: Info = {
 
       await fs.mkdir(distPath, { recursive: true })
       const archivePath = path.join(distPath, "kotlin-ls.zip")
-      const download = await fetch(releaseURL)
-      if (!download.ok || !download.body) {
+      const download = await fetch(releaseURL).catch((error) => {
+        console.warn(`kotlin-ls: failed to download ${releaseURL}: ${error}`)
+        return undefined
+      })
+      if (!download || !download.ok || !download.body) {
+        console.warn(`kotlin-ls: download failed with status ${download?.status ?? "network error"}`)
+        await fs.rm(distPath, { recursive: true, force: true }).catch(() => {})
         return
       }
       await Filesystem.writeStream(archivePath, download.body)
       const ok = await Archive.extractZip(archivePath, distPath)
         .then(() => true)
         .catch((error) => {
+          console.warn(`kotlin-ls: failed to extract archive: ${error}`)
           return false
         })
-      if (!ok) return
+      if (!ok) {
+        await fs.rm(distPath, { recursive: true, force: true }).catch(() => {})
+        return
+      }
       await fs.rm(archivePath, { force: true })
       if (process.platform !== "win32") {
         await fs.chmod(launcherScript, 0o755).catch(() => {})
       }
     }
     if (!(await Filesystem.exists(launcherScript))) {
+      console.warn(`kotlin-ls: launcher script not found at ${launcherScript}, installation may have failed`)
       return
     }
     return {
