@@ -193,17 +193,20 @@ export function update(adapter: Adapter, event: SessionEvent.Event) {
               }),
             )
           }
-          yield* adapter.appendMessage(
-            SessionMessage.Assistant.make({
-              id: event.data.assistantMessageID,
-              type: "assistant",
-              agent: event.data.agent,
-              model: event.data.model,
-              time: { created: event.data.timestamp },
-              content: [],
-              snapshot: event.data.snapshot ? { start: event.data.snapshot } : undefined,
-            }),
-          )
+          const existing = yield* adapter.getAssistant(event.data.assistantMessageID)
+          if (!existing) {
+            yield* adapter.appendMessage(
+              SessionMessage.Assistant.make({
+                id: event.data.assistantMessageID,
+                type: "assistant",
+                agent: event.data.agent,
+                model: event.data.model,
+                time: { created: event.data.timestamp },
+                content: [],
+                snapshot: event.data.snapshot ? { start: event.data.snapshot } : undefined,
+              }),
+            )
+          }
         })
       },
       "session.next.step.ended": (event) => {
