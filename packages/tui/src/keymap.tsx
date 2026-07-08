@@ -133,6 +133,35 @@ function registerKeyAliases(keymap: OpenTuiKeymap) {
   })
 }
 
+// Detect AltGr key events: on most terminals AltGr is sent as Ctrl+Alt (ctrl+meta).
+// When AltGr is active the terminal encodes the resulting symbol in the key name,
+// so the event arrives as ctrl+meta+<letter>.  The keymap must NOT consume these as
+// keybindings – they should pass straight through to the textarea for character
+// insertion.  We detect the combination and call preventDefault before the keymap
+// can match any binding.
+function isAltGrKeyEvent(event: KeyEvent): boolean {
+  return event.ctrl === true && event.meta === true
+}
+
+// Only block bindings for printable characters (single-char key names like
+// "q", "2", "[" etc.).  Non-printable keys (arrows, F-keys, pagedown …)
+// that happen to arrive as ctrl+meta should still match their bindings.
+function isPrintableKeyName(name: string): boolean {
+  return name.length === 1
+}
+
+function registerAltGrIntercept(keymap: OpenTuiKeymap) {
+  return keymap.intercept(
+    "key",
+    ({ event }) => {
+      if (isAltGrKeyEvent(event) && isPrintableKeyName(event.name)) {
+        event.preventDefault()
+      }
+    },
+    { priority: 2 },
+  )
+}
+
 const inputCommands = [
   "input.move.left",
   "input.move.right",
@@ -230,8 +259,10 @@ export function registerOpencodeKeymap(keymap: OpenTuiKeymap, renderer: CliRende
     enabled: () => hasManagedTextareaFocus(renderer),
     bindings: config.keybinds.gather("input", inputCommands),
   })
+  const offAltGr = registerAltGrIntercept(keymap)
 
   return () => {
+    offAltGr()
     offInputBindings()
     offBackspace()
     offEscape()
