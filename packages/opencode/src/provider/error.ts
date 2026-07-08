@@ -1,4 +1,4 @@
-import { APICallError } from "ai"
+﻿import { APICallError } from "ai"
 import { STATUS_CODES } from "http"
 import { iife } from "@/util/iife"
 import type { ProviderV2 } from "@opencode-ai/core/provider"
@@ -144,6 +144,19 @@ export function parseStreamError(input: unknown): ParsedStreamError | undefined 
         responseBody,
       }
   }
+
+  // Detect context overflow from non-OpenAI providers whose error messages
+  // don't use the "context_length_exceeded" code. Anthropic returns
+  // "prompt is too long", Gemini returns "context length exceeded", etc.
+  const errorMsg = typeof body?.error?.message === "string" ? body.error.message : ""
+  const combined = errorMsg ? `${errorMsg} ${responseBody}` : responseBody
+  if (isContextOverflow(combined)) {
+    return {
+      type: "context_overflow",
+      message: errorMsg || "Input exceeds context window",
+      responseBody,
+    }
+  }
 }
 
 export type ParsedAPICallError =
@@ -186,3 +199,4 @@ export function parseAPICallError(input: { providerID: ProviderV2.ID; error: API
 }
 
 export * as ProviderError from "./error"
+
