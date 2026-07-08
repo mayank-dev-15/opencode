@@ -398,6 +398,11 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           if (saved.session[session] !== undefined) return
           if (handoff.has(handoffKey(serverSDK().scope, sdk().directory, session))) return
 
+          const agentItem = pickAgent(msg.agent)
+          if (agentItem?.model && msg.model.providerID === agentItem.model.providerID && msg.model.modelID === agentItem.model.modelID) {
+            return
+          }
+
           setSaved("session", session, {
             agent: msg.agent,
             model: msg.model,
