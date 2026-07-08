@@ -1250,7 +1250,17 @@ export default function LegacyLayout(props: ParentProps) {
     navigateWithSidebarReset(`/${base64Encode(session.directory)}/session/${session.id}`)
   }
 
+  let previousProjectDir: string | undefined
+
   function openProject(directory: string, navigate = true) {
+    if (previousProjectDir && previousProjectDir !== directory) {
+      const oldSessions = serverSync().child(previousProjectDir, { bootstrap: false })[0].session
+      for (const s of oldSessions) {
+        serverSync().session.evict(s.id)
+      }
+      prefetchedByDir.delete(previousProjectDir)
+    }
+    previousProjectDir = directory
     layout.projects.open(directory)
     if (navigate) return navigateToProject(directory)
   }
@@ -1319,12 +1329,25 @@ export default function LegacyLayout(props: ParentProps) {
     }
 
     if (list.length === 1) {
+      const oldSessions = serverSync().child(directory, { bootstrap: false })[0].session
+      for (const s of oldSessions) {
+        serverSync().session.evict(s.id)
+      }
+      prefetchedByDir.delete(directory)
+      previousProjectDir = undefined
+
       layout.projects.close(directory)
       navigate("/")
       return
     }
 
     const next = list[index + 1] ?? list[index - 1]
+
+    const oldSessions = serverSync().child(directory, { bootstrap: false })[0].session
+    for (const s of oldSessions) {
+      serverSync().session.evict(s.id)
+    }
+    prefetchedByDir.delete(directory)
 
     navigateWithSidebarReset(`/${base64Encode(next.worktree)}/session`)
     layout.projects.close(directory)
