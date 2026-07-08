@@ -1491,11 +1491,19 @@ const layer = Layer.effect(
 
         // load env
         const envs = yield* env.all()
+        const usedEnvVars = new Set<string>()
         for (const [id, provider] of Object.entries(database)) {
           const providerID = ProviderV2.ID.make(id)
           if (disabled.has(providerID)) continue
           const apiKey = provider.env.map((item) => envs[item]).find(Boolean)
           if (!apiKey) continue
+          // Skip if any of this provider's env vars were already used by another provider
+          // to prevent duplicate registrations from the same env var (e.g. STEPFUN_API_KEY
+          // shared between "stepfun" and "stepfun-ai")
+          if (provider.env.some((item) => usedEnvVars.has(item))) continue
+          for (const item of provider.env) {
+            if (envs[item]) usedEnvVars.add(item)
+          }
           mergeProvider(providerID, {
             source: "env",
             key: provider.env.length === 1 ? apiKey : undefined,
