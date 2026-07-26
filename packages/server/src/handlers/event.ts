@@ -1,6 +1,6 @@
 import { EventV2 } from "@opencode-ai/core/event"
 import { OpenCodeEvent } from "@opencode-ai/protocol/groups/event"
-import { Duration, Effect, Schema, Stream } from "effect"
+import { Effect, Schema, Stream } from "effect"
 import { HttpServerResponse } from "effect/unstable/http"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import * as Sse from "effect/unstable/encoding/Sse"
@@ -8,13 +8,13 @@ import { Api } from "../api"
 
 const subscriberCapacity = 256
 
-function eventData(data: unknown): Sse.Event {
-  return {
-    _tag: "Event",
-    event: "message",
-    id: undefined,
-    data: JSON.stringify(Schema.encodeUnknownSync(OpenCodeEvent)(data)),
-  }
+function eventData(data: unknown) {
+  return Effect.map(Schema.encodeUnknownEffect(OpenCodeEvent)(data), (encoded) => ({
+    _tag: "Event" as const,
+    event: "message" as const,
+    id: undefined as string | undefined,
+    data: JSON.stringify(encoded),
+  }))
 }
 
 export const EventHandler = HttpApiBuilder.group(Api, "server.event", (handlers) =>
@@ -33,8 +33,8 @@ export const EventHandler = HttpApiBuilder.group(Api, "server.event", (handlers)
             const live = yield* EventV2.allBounded(events, subscriberCapacity)
             return Stream.make(connected).pipe(Stream.concat(live))
           }),
-        ).pipe(Stream.map(eventData), Stream.pipeThroughChannel(Sse.encode()))
-        const heartbeat = Stream.tick(Duration.seconds(15)).pipe(Stream.map(() => ": heartbeat\n\n"))
+        ).pipe(Stream.mapEffect(eventData), Stream.pipeThroughChannel(Sse.encode()))
+        const heartbeat = Stream.tick("15 seconds").pipe(Stream.map(() => ": heartbeat\n\n"))
         return HttpServerResponse.stream(
           output.pipe(Stream.merge(heartbeat, { haltStrategy: "left" }), Stream.encodeText),
           {
