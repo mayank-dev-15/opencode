@@ -35,8 +35,10 @@ export default Runtime.handler(
         method: request.method,
         headers,
         body,
+        signal: AbortSignal.timeout(30000),
       }),
     )
+    if (!response.ok) return yield* Effect.fail(new Error(`API request failed: HTTP ${response.status}`))
     const output = yield* Effect.promise(() => response.text())
     if (output) process.stdout.write(output + (output.endsWith(EOL) ? "" : EOL))
   }),
@@ -46,10 +48,10 @@ export function resolveOperation(spec: OpenApi, operationID: string, params: Rec
   for (const [path, operations] of Object.entries(spec.paths ?? {})) {
     for (const [method, operation] of Object.entries(operations)) {
       if (!methods.has(method) || operation.operationId !== operationID) continue
-      return { method: method.toUpperCase(), path: interpolate(path, params) }
+      return Effect.succeed({ method: method.toUpperCase(), path: interpolate(path, params) })
     }
   }
-  throw new Error(`Operation not found: ${operationID}`)
+  return Effect.fail(new Error(`Operation not found: ${operationID}`))
 }
 
 export function rawRequest(input: readonly string[]) {
@@ -65,10 +67,13 @@ function resolveRequest(
   const raw = rawRequest(input)
   if (raw) return Effect.succeed(raw)
   if (input.length !== 1) return Effect.fail(new Error("Expected an operation name or an HTTP method and path"))
-  return Effect.tryPromise(async () => {
-    const response = await fetch(new URL("/openapi.json", transport.url), { headers: transport.headers })
-    if (!response.ok) throw new Error(`Failed to load OpenAPI document: HTTP ${response.status}`)
-    return resolveOperation((await response.json()) as OpenApi, input[0], params)
+  return Effect.gen(function* () {
+    const response = yield* Effect.tryPromise(() =>
+      fetch(new URL("/openapi.json", transport.url), { headers: transport.headers }),
+    )
+    if (!response.ok) return yield* Effect.fail(new Error(`Failed to load OpenAPI document: HTTP ${response.status}`))
+    const spec = yield* Effect.tryPromise(() => response.json() as Promise<OpenApi>)
+    return yield* resolveOperation(spec, input[0], params)
   })
 }
 
