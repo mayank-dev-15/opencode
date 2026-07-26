@@ -7,7 +7,7 @@ import { ModelV2 } from "./model"
 import { ProviderV2 } from "./provider"
 import { State } from "./state"
 
-type SDK = any
+type SDK = { languageModel(id: string): LanguageModelV3 }
 
 export interface SDKEvent {
   readonly model: ModelV2.Info
@@ -87,7 +87,7 @@ function prepareOptions(model: ModelV2.Info, pkg: string) {
     const signals = [
       opts.signal,
       typeof chunkTimeout === "number" && chunkTimeout > 0 ? new AbortController() : undefined,
-      options.timeout !== undefined && options.timeout !== null && options.timeout !== false
+      options.timeout != null && typeof options.timeout === "number" && options.timeout > 0
         ? AbortSignal.timeout(options.timeout)
         : undefined,
     ].filter((item): item is AbortSignal | AbortController => Boolean(item))
