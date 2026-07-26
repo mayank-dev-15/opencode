@@ -103,7 +103,7 @@ export default {
       }),
       subjects,
       async success(ctx, response) {
-        console.log(response)
+        console.log({ provider: response.provider, accountID: response.tokenset?.access?.slice(0, 8) })
 
         let subject: string | undefined
         let email: string | undefined
