@@ -64,5 +64,7 @@ function makeRoutes<AuthError, AuthServices>(auth: Layer.Layer<ServerAuth.Config
 
 export const routes = createRoutes()
 
-export const webHandler = () =>
-  HttpRouter.toWebHandler(routes.pipe(Layer.provide(HttpServer.layerServices)), { disableLogger: true })
+export const webHandler = (options?: { disableLogger?: boolean }) =>
+  HttpRouter.toWebHandler(routes.pipe(Layer.provide(HttpServer.layerServices)), {
+    disableLogger: options?.disableLogger ?? false,
+  })
