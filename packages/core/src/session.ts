@@ -241,7 +241,7 @@ const layer = Layer.effect(
         const projected = yield* events
           .publish(SessionV1.Event.Created, { sessionID, info }, { location: input.location })
           .pipe(
-            Effect.as({ type: "created" } as const),
+            Effect.as<{ readonly type: "created" }>({ type: "created" }),
             Effect.catchDefect((defect) => {
               if (!(defect instanceof SessionProjector.SessionAlreadyProjected)) {
                 return Effect.die(defect)
@@ -251,7 +251,7 @@ const layer = Layer.effect(
                 .get(sessionID)
                 .pipe(
                   Effect.flatMap((session) =>
-                    session ? Effect.succeed({ type: "existing", session } as const) : Effect.die(defect),
+                    session ? Effect.succeed<{ readonly type: "existing"; readonly session: SessionSchema.Info }>({ type: "existing", session }) : Effect.die(defect),
                   ),
                 )
             }),
