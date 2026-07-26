@@ -19,7 +19,7 @@ export const DynamicProviderPlugin = define({
         const mod = yield* Effect.promise(async () => {
           return (await import(
             installedPath.startsWith("file://") ? installedPath : pathToFileURL(installedPath).href
-          )) as Record<string, (options: any) => any>
+          )) as Record<string, (options: unknown) => unknown>
         }).pipe(Effect.orDie)
         const match = Object.keys(mod).find((name) => name.startsWith("create"))
         if (!match) throw new Error(`Package ${evt.package} has no provider factory export`)

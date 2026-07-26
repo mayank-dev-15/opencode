@@ -33,7 +33,7 @@ export const CloudflareWorkersAIPlugin = define({
           sdkOptions({
             ...evt.options,
             baseURL: evt.options.baseURL ?? (accountId ? workersEndpoint(accountId) : undefined),
-          }) as any,
+          }),
         )
       }),
     )

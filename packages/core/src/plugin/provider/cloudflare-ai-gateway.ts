@@ -23,7 +23,7 @@ export const CloudflareAIGatewayPlugin = define({
           gateway: config.gatewayId,
           apiKey: config.apiKey,
           options: gatewayOptions(evt.options, metadata),
-        } as any)
+        })
         const unified = createUnified({ apiKey: config.apiKey })
         evt.sdk = {
           languageModel(modelID: string) {
