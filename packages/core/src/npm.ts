@@ -162,20 +162,22 @@ const layer = Layer.effect(
 
         const pkgAny = pkg as Record<string, unknown>
         const lockAny = lock as Record<string, unknown>
+        const asRecord = (v: unknown): Record<string, unknown> =>
+          v && typeof v === "object" ? v as Record<string, unknown> : {}
         const declared = new Set([
-          ...Object.keys(pkgAny?.dependencies || {}),
-          ...Object.keys(pkgAny?.devDependencies || {}),
-          ...Object.keys(pkgAny?.peerDependencies || {}),
-          ...Object.keys(pkgAny?.optionalDependencies || {}),
+          ...Object.keys(asRecord(pkgAny.dependencies)),
+          ...Object.keys(asRecord(pkgAny.devDependencies)),
+          ...Object.keys(asRecord(pkgAny.peerDependencies)),
+          ...Object.keys(asRecord(pkgAny.optionalDependencies)),
           ...(input?.add || []).map((pkg) => pkg.name),
         ])
 
-        const root = lockAny?.packages?.[""] || {}
+        const root = asRecord(asRecord(lockAny.packages)[""])
         const locked = new Set([
-          ...Object.keys(root?.dependencies || {}),
-          ...Object.keys(root?.devDependencies || {}),
-          ...Object.keys(root?.peerDependencies || {}),
-          ...Object.keys(root?.optionalDependencies || {}),
+          ...Object.keys(asRecord(root.dependencies)),
+          ...Object.keys(asRecord(root.devDependencies)),
+          ...Object.keys(asRecord(root.peerDependencies)),
+          ...Object.keys(asRecord(root.optionalDependencies)),
         ])
 
         for (const name of declared) {
