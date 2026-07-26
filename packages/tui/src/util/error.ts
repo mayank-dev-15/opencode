@@ -163,17 +163,20 @@ export function errorData(error: unknown) {
     }
   }
 
-  const data = Object.getOwnPropertyNames(error).reduce<Record<string, unknown>>((acc, key) => {
-    const value = error[key]
-    if (value === undefined) return acc
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-      acc[key] = value
-      return acc
+  const data: Record<string, unknown> = {}
+  for (let proto = error; proto !== null; proto = Object.getPrototypeOf(proto)) {
+    for (const key of Object.getOwnPropertyNames(proto)) {
+      if (key === "constructor" || key in data) continue
+      const value = error[key]
+      if (value === undefined) continue
+      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        data[key] = value
+      } else {
+        // oxlint-disable-next-line no-base-to-string -- intentional coercion of arbitrary error properties
+        data[key] = value instanceof Error ? value.message : String(value)
+      }
     }
-    // oxlint-disable-next-line no-base-to-string -- intentional coercion of arbitrary error properties
-    acc[key] = value instanceof Error ? value.message : String(value)
-    return acc
-  }, {})
+  }
 
   if (typeof data.message !== "string") data.message = errorMessage(error)
   if (typeof data.type !== "string") data.type = error.constructor?.name
