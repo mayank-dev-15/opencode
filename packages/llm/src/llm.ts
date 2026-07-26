@@ -120,14 +120,18 @@ const runGenerateObject = Effect.fn("LLM.generateObject")(function* (
   const call = response.toolCalls.find(
     (event) => LLMEvent.is.toolCall(event) && event.name === GENERATE_OBJECT_TOOL_NAME,
   )
-  if (!call || !LLMEvent.is.toolCall(call))
+  if (!call || !LLMEvent.is.toolCall(call)) {
+    const hasAnyToolCall = response.toolCalls.some((event) => LLMEvent.is.toolCall(event))
     return yield* new LLMError({
       module: "LLM",
       method: "generateObject",
       reason: new InvalidProviderOutputReason({
-        message: `generateObject: model did not call the forced \`${GENERATE_OBJECT_TOOL_NAME}\` tool`,
+        message: hasAnyToolCall
+          ? `generateObject: model called \`${response.toolCalls.find(LLMEvent.is.toolCall)?.name}\` instead of forced \`${GENERATE_OBJECT_TOOL_NAME}\``
+          : `generateObject: model returned no tool calls (got ${response.toolCalls.length} events)`,
       }),
     })
+  }
   const object = yield* tool._decode(call.input).pipe(
     Effect.mapError(
       (error) =>
@@ -169,7 +173,7 @@ export function generateObject(options: GenerateObjectOptions<ToolSchema<any>> |
       makeTool({
         description: GENERATE_OBJECT_TOOL_DESCRIPTION,
         parameters: schema,
-        success: Schema.Unknown as ToolSchema<unknown>,
+        success: Schema as ToolSchema<unknown>,
         execute: () => Effect.void,
       }),
     )

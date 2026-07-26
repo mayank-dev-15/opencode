@@ -13,7 +13,7 @@ export type ModelFactory<Options extends ModelOptions = ModelOptions> = (
   options?: Options,
 ) => Model
 
-type AnyModelFactory = (...args: never[]) => Model
+type AnyModelFactory = (...args: any[]) => Model
 
 export interface Definition<Factory extends AnyModelFactory = ModelFactory> {
   readonly id: ProviderID

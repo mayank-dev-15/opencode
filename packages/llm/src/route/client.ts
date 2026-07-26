@@ -56,7 +56,7 @@ export interface Route<Body, Prepared = unknown> {
 // Normal call sites use `OpenAIChat.route`; callers only need body types
 // when preparing a request with a protocol-specific type assertion.
 // oxlint-disable-next-line typescript-eslint/no-explicit-any
-export type AnyRoute = Route<any, any>
+export type AnyRoute = Route<unknown, unknown>
 
 export type HttpOptionsInput = HttpOptions.Input
 
