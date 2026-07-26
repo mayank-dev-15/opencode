@@ -20,7 +20,7 @@ export default Runtime.handler(
         const daemon = yield* Daemon.Service
         const address = yield* listen(input.hostname, input.port, yield* daemon.password())
         if (input.register) yield* daemon.register(address)
-        console.log(`server listening on ${HttpServer.formatAddress(address)}`)
+        yield* Effect.logInfo(`server listening on ${HttpServer.formatAddress(address)}`)
         return yield* Effect.never
       }),
     )
