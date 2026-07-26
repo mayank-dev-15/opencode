@@ -1009,7 +1009,7 @@ export function Prompt(props: PromptProps) {
 
       if (res.error) {
         if (finishMoveProgress) move.finishSubmit()
-        console.log("Creating a session failed:", res.error)
+        console.error("Creating a session failed:", res.error)
 
         toast.show({
           message: "Creating a session failed. Open console for more details.",
