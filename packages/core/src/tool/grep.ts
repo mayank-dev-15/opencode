@@ -93,7 +93,7 @@ const layer = Layer.effectDiscard(
                 source: { type: "tool", messageID: context.assistantMessageID, callID: context.toolCallID },
               })
               const target = path.resolve(location.directory, input.path ?? ".")
-              const info = yield* fs.stat(target).pipe(Effect.catch(() => Effect.succeed(undefined)))
+              const info = yield* fs.stat(target).pipe(Effect.catchAll((e) => "code" in e && e.code === "ENOENT" ? Effect.succeed(undefined) : Effect.fail(e)))
               return yield* ripgrep
                 .grep({
                   cwd: info?.type === "Directory" ? target : path.dirname(target),
@@ -123,7 +123,10 @@ const layer = Layer.effectDiscard(
                     ),
                   ),
                 )
-            }).pipe(Effect.mapError(() => new ToolFailure({ message: `Unable to grep for ${input.pattern}` }))),
+            }).pipe(Effect.mapError((e) => {
+              const reason = "_tag" in e ? `${(e as any)._tag}: ${(e as any).message ?? ""}` : String(e)
+              return new ToolFailure({ message: `Unable to grep for ${input.pattern}: ${reason}` })
+            })),
         }),
       })
       .pipe(Effect.orDie)
