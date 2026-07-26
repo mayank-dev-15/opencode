@@ -83,13 +83,13 @@ const layer = Layer.effectDiscard(
                 offset: input.offset,
                 limit: input.limit,
               })
-              if ("encoding" in content && content.encoding === "base64" && SUPPORTED_IMAGE_MIMES.has(content.mime)) {
-                return yield* image
-                  .normalize(resource, { ...content, encoding: "base64" })
-                  .pipe(Effect.catchTag("Image.ResizerUnavailableError", () => Effect.succeed(content)))
-              }
-              if ("encoding" in content && content.encoding === "base64")
+              if ("encoding" in content && content.encoding === "base64") {
+                if (SUPPORTED_IMAGE_MIMES.has(content.mime))
+                  return yield* image
+                    .normalize(resource, { ...content, encoding: "base64" })
+                    .pipe(Effect.catchTag("Image.ResizerUnavailableError", () => Effect.succeed(content)))
                 return yield* Effect.fail(new ReadToolFileSystem.BinaryFileError({ resource }))
+              }
               return content
             }).pipe(
               Effect.mapError((error) => {
