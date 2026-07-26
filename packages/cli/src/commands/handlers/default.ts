@@ -7,7 +7,9 @@ export default Runtime.handler(Commands, () =>
   Effect.gen(function* () {
     const daemon = yield* Daemon.Service
     const transport = yield* daemon.transport()
-    const { runTui } = yield* Effect.promise(() => import("../../tui"))
+    const { runTui } = yield* Effect.promise(() => import("../../tui")).pipe(
+      Effect.catchAll((error) => Effect.fail(new Error(`Failed to load TUI: ${(error as Error).message}`))),
+    )
     yield* runTui(transport)
   }),
 )
