@@ -94,7 +94,9 @@ function prepareOptions(model: ModelV2.Info, pkg: string) {
     const chunkAbortCtl = signals.find((item): item is AbortController => item instanceof AbortController)
     const abortSignals = signals.map((item) => (item instanceof AbortController ? item.signal : item))
     if (abortSignals.length === 1) opts.signal = abortSignals[0]
-    if (abortSignals.length > 1) opts.signal = AbortSignal.any(abortSignals)
+    if (abortSignals.length > 1) {
+      opts.signal = typeof AbortSignal.any === "function" ? AbortSignal.any(abortSignals) : abortSignals[0]
+    }
 
     if (
       (pkg === "@ai-sdk/openai" || pkg === "@ai-sdk/azure" || pkg === "@ai-sdk/amazon-bedrock/mantle") &&

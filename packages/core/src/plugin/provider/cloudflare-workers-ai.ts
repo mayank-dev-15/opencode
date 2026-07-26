@@ -58,7 +58,7 @@ function hasWorkersEndpoint(api: ProviderV2.Api) {
   return api.type === "aisdk" && Boolean(api.url)
 }
 
-function sdkOptions(options: Record<string, any>) {
+function sdkOptions(options: Record<string, unknown>) {
   return {
     ...options,
     baseURL: expandAccountId(options.baseURL),
