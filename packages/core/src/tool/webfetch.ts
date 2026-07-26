@@ -109,9 +109,20 @@ const isTextualMime = (mime: string) =>
   mime === "application/javascript" ||
   mime === "application/x-javascript"
 const convert = (content: string, contentType: string, format: Format) => {
-  if (!contentType.includes("text/html")) return content
-  if (format === "markdown") return convertHTMLToMarkdown(content)
-  if (format === "text") return extractTextFromHTML(content)
+  if (contentType.includes("text/html")) {
+    if (format === "markdown") return convertHTMLToMarkdown(content)
+    if (format === "text") return extractTextFromHTML(content)
+    return content
+  }
+  if (format === "markdown") {
+    const mime = mimeFrom(contentType)
+    const lang =
+      mime === "application/json" || mime.endsWith("+json") ? "json"
+        : mime === "application/xml" || mime.endsWith("+xml") ? "xml"
+          : mime === "application/javascript" || mime === "application/x-javascript" ? "js"
+            : ""
+    if (lang) return "```" + lang + "\n" + content + "\n```"
+  }
   return content
 }
 
