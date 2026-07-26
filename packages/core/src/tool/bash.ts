@@ -183,7 +183,7 @@ const layer = Layer.effectDiscard(
                 }
               }
 
-              const output = result.output?.toString("utf8") || "(no output)"
+              const output = result.output ? new TextDecoder().decode(result.output) : "(no output)"
               const notice = result.outputTruncated
                 ? "[output capture truncated at the in-memory safety limit]"
                 : undefined
