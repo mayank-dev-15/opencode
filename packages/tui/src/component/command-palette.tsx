@@ -60,7 +60,7 @@ export function CommandPaletteDialog() {
     })),
   )
 
-  let ref: DialogSelectRef<string>
+  let ref: DialogSelectRef<string> | undefined
   const list = () => {
     if (ref?.filter) return options()
     return [
