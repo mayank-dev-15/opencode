@@ -132,8 +132,8 @@ const layer = Layer.effectDiscard(
             Effect.gen(function* () {
               yield* Effect.try({
                 try: () => assertHttpUrl(new URL(input.url)),
-                catch: (error) => error,
-              })
+                catch: (error) => new Error(`Invalid URL: ${error instanceof Error ? error.message : error}`),
+              }).pipe(Effect.mapError((e: any) => new ToolFailure({ message: e.message })))
 
               yield* permission.assert({
                 action: name,
@@ -156,12 +156,7 @@ const layer = Layer.effectDiscard(
                 if (!isTextualMime(mime))
                   return yield* Effect.fail(new Error(`Unsupported fetched file content type: ${mime}`))
                 return { body: yield* collectBody(response), contentType }
-              }).pipe(
-                Effect.timeoutOrElse({
-                  duration: Duration.seconds(input.timeout ?? DEFAULT_TIMEOUT_SECONDS),
-                  orElse: () => Effect.fail(new Error("Request timed out")),
-                }),
-              )
+              })
               const content = new TextDecoder().decode(body)
               const output = yield* Effect.try({
                 try: () => convert(content, contentType, input.format),
@@ -173,7 +168,13 @@ const layer = Layer.effectDiscard(
                 format: input.format,
                 output,
               }
-            }).pipe(Effect.mapError(() => new ToolFailure({ message: `Unable to fetch ${input.url}` }))),
+            }).pipe(
+                Effect.timeoutOrElse({
+                  duration: Duration.seconds(input.timeout ?? DEFAULT_TIMEOUT_SECONDS),
+                  orElse: () => Effect.fail(new Error("Request timed out")),
+                }),
+                Effect.mapError((e) => new ToolFailure({ message: `Unable to fetch ${input.url}: ${e instanceof Error ? e.message : "unknown"}` })),
+              ),
         }),
       })
       .pipe(Effect.orDie)
