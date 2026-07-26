@@ -47,17 +47,19 @@ export class InvalidDurableEventError extends Schema.TaggedErrorClass<InvalidDur
   },
 ) {}
 
-const decodeSerializedEvent = (event: SerializedEvent): Payload => {
+const decodeSerializedEvent = (event: SerializedEvent): Effect.Effect<Payload, InvalidDurableEventError> => {
   const definition = Durable.get(event.type)
-  if (!definition?.durable) {
-    throw new InvalidDurableEventError({ type: event.type, message: `Unknown durable event type ${event.type}` })
-  }
-  return {
-    id: event.id,
-    type: definition.type,
-    durable: { aggregateID: event.aggregateID, seq: event.seq, version: definition.durable.version },
-    data: Schema.decodeUnknownSync(definition.data)(event.data),
-  }
+  if (!definition?.durable)
+    return Effect.fail(new InvalidDurableEventError({ type: event.type, message: `Unknown durable event type ${event.type}` }))
+  return Effect.try({
+    try: () => ({
+      id: event.id,
+      type: definition.type,
+      durable: { aggregateID: event.aggregateID, seq: event.seq, version: definition.durable.version },
+      data: Schema.decodeUnknownSync(definition.data)(event.data),
+    }),
+    catch: () => new InvalidDurableEventError({ type: event.type, message: `Failed to decode event data for type ${event.type}` }),
+  })
 }
 
 export const readAggregate = Effect.fn("EventV2.readAggregate")(function* <A>(
@@ -247,10 +249,13 @@ export const layerWith = (options?: LayerOptions) =>
                             .get()
                             .pipe(Effect.orDie)
                           const latest = row?.seq ?? -1
-                          const encoded = Schema.encodeUnknownSync(definition.data)(event.data) as Record<
-                            string,
-                            unknown
-                          >
+                          const encoded = yield* Effect.try({
+                            try: () => Schema.encodeUnknownSync(definition.data)(event.data),
+                            catch: (e) => new InvalidDurableEventError({
+                              type: event.type,
+                              message: `Failed to encode event data: ${e instanceof Error ? e.message : e}`,
+                            }),
+                          }).pipe(Effect.orDie) as Record<string, unknown>
                           if (input?.strictOwner && row?.ownerID && row.ownerID !== input.ownerID) {
                             yield* Effect.die(
                               new InvalidDurableEventError({
@@ -449,10 +454,14 @@ export const layerWith = (options?: LayerOptions) =>
               new InvalidDurableEventError({ type: event.type, message: `Unknown durable event type ${event.type}` }),
             )
           } else {
+            const data = yield* Effect.try({
+              try: () => Schema.decodeUnknownSync(definition.data)(event.data),
+              catch: () => new InvalidDurableEventError({ type: event.type, message: `Failed to decode replay event data for type ${event.type}` }),
+            })
             const payload = {
               id: event.id,
               type: definition.type,
-              data: Schema.decodeUnknownSync(definition.data)(event.data),
+              data,
             } as Payload
             const committed = yield* commitDurableEvent(definition, payload, {
               seq: event.seq,
@@ -549,8 +558,8 @@ export const layerWith = (options?: LayerOptions) =>
               .all(),
           ),
           Effect.orDie,
-          Effect.map((rows) =>
-            rows.map((event) =>
+          Effect.flatMap((rows) =>
+            Effect.forEach(rows, (event) =>
               decodeSerializedEvent({
                 id: event.id,
                 aggregateID: event.aggregate_id,
