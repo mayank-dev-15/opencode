@@ -125,14 +125,18 @@ const layer = Layer.effectDiscard(
                   callID: context.toolCallID,
                 }
                 if (input.oldString === input.newString) {
-                  return yield* new ToolFailure({
-                    message: "No changes to apply: oldString and newString are identical.",
-                  })
+                  return yield* Effect.fail(
+                    new ToolFailure({
+                      message: "No changes to apply: oldString and newString are identical.",
+                    }),
+                  )
                 }
                 if (input.oldString === "") {
-                  return yield* new ToolFailure({
-                    message: "oldString must not be empty. Use write to create or overwrite a file.",
-                  })
+                  return yield* Effect.fail(
+                    new ToolFailure({
+                      message: "oldString must not be empty. Use write to create or overwrite a file.",
+                    }),
+                  )
                 }
 
                 const target = yield* unableToEdit(mutation.resolve({ path: input.path, kind: "file" }))
