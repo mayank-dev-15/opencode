@@ -39,7 +39,11 @@ const VERSION = await (async () => {
       if (!res.ok) throw new Error(res.statusText)
       return res.json()
     })
-    .then((data: any) => data.version)
+    .then((data: Record<string, unknown>) => {
+      const v = data.version
+      if (typeof v !== "string") throw new Error("Invalid version from registry")
+      return v
+    })
   const [major, minor, patch] = version.split(".").map((x: string) => Number(x) || 0)
   const t = env.OPENCODE_BUMP?.toLowerCase()
   if (t === "major") return `${major + 1}.0.0`
@@ -74,4 +78,3 @@ export const Script = {
     return team
   },
 }
-console.log(`opencode script`, JSON.stringify(Script, null, 2))
