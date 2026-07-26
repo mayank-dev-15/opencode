@@ -206,7 +206,7 @@ const layer = Layer.effect(
 
     const result = Service.of({
       create: Effect.fn("V2Session.create")(function* (input) {
-        const sessionID = input.id ?? SessionSchema.ID.create()
+        const sessionID = input.id != null && input.id !== "" ? input.id : SessionSchema.ID.create()
         const recorded = yield* store.get(sessionID)
         if (recorded) return recorded
         const project = yield* projects.resolve(input.location.directory)
