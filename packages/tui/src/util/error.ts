@@ -69,8 +69,11 @@ export function cliErrorMessage(input: unknown): string | undefined {
 
   if (tagged(input, "UICancelledError") || named(input, "UICancelledError")) return ""
   if (isRecord(input) && named(input, "MCPFailed")) {
-    const name = isRecord(input.data) ? field(input.data, "name") : undefined
-    return `MCP server "${name}" failed. Note, opencode does not support MCP authentication yet.`
+    const data = isRecord(input.data) ? input.data : undefined
+    const name = data ? field(data, "name") : undefined
+    const reason = data ? field(data, "reason") ?? field(data, "error") ?? field(data, "message") : undefined
+    const base = `MCP server "${name}" failed`
+    return reason ? `${base}: ${reason}` : base
   }
   return undefined
 }
