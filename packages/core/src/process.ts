@@ -31,6 +31,7 @@ export interface RunOptions {
 export interface RunStreamOptions {
   readonly signal?: AbortSignal
   readonly includeStderr?: boolean
+  /** Exit codes considered successful. Defaults to [0]. Use [0, 1] to treat warnings as success. */
   readonly okExitCodes?: ReadonlyArray<number>
   readonly maxErrorBytes?: number
 }
