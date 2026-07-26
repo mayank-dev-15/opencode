@@ -55,7 +55,7 @@ export const MessageHandler = HttpApiBuilder.group(Api, "server.message", (handl
               ),
             ),
             Effect.catchTag("Session.MessageDecodeError", (error) => {
-              const ref = `err_${crypto.randomUUID().slice(0, 8)}`
+              const ref = `err_${crypto.randomUUID()}`
               return Effect.logError("failed to decode session message").pipe(
                 Effect.annotateLogs({ ref, sessionID: error.sessionID, messageID: error.messageID }),
                 Effect.andThen(

@@ -240,7 +240,7 @@ export const SessionHandler = HttpApiBuilder.group(Api, "server.session", (handl
                   }),
               ),
               Effect.catchTag("Snapshot.Error", (error) => {
-                const ref = `err_${crypto.randomUUID().slice(0, 8)}`
+                const ref = `err_${crypto.randomUUID()}`
                 return Effect.logError("failed to stage session revert", { cause: error }).pipe(
                   Effect.andThen(
                     Effect.fail(
@@ -269,7 +269,7 @@ export const SessionHandler = HttpApiBuilder.group(Api, "server.session", (handl
                 }),
             ),
             Effect.catchTag("Snapshot.Error", (error) => {
-              const ref = `err_${crypto.randomUUID().slice(0, 8)}`
+              const ref = `err_${crypto.randomUUID()}`
               return Effect.logError("failed to clear session revert", { cause: error }).pipe(
                 Effect.andThen(
                   Effect.fail(
@@ -315,7 +315,7 @@ export const SessionHandler = HttpApiBuilder.group(Api, "server.session", (handl
                 ),
               ),
               Effect.catchTag("Session.MessageDecodeError", (error) => {
-                const ref = `err_${crypto.randomUUID().slice(0, 8)}`
+                const ref = `err_${crypto.randomUUID()}`
                 return Effect.logError("failed to decode session message").pipe(
                   Effect.annotateLogs({ ref, sessionID: error.sessionID, messageID: error.messageID }),
                   Effect.andThen(
