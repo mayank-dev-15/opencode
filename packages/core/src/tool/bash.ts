@@ -151,10 +151,10 @@ const layer = Layer.effectDiscard(
               if ((yield* fs.stat(target.canonical)).type !== "Directory")
                 return yield* Effect.fail(new Error(`Working directory is not a directory: ${target.canonical}`))
 
-              const entries = yield* config.entries()
               const shell =
-                Object.assign({}, ...entries.flatMap((entry) => (entry.type === "document" ? [entry.info] : [])))
-                  .shell ?? defaultShell()
+              (yield* config.entries()).find(
+                (entry) => entry.type === "document" && entry.info.shell,
+              )?.info.shell ?? defaultShell()
               const command = ChildProcess.make(input.command, [], {
                 cwd: target.canonical,
                 shell,
