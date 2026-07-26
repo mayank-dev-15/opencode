@@ -257,7 +257,7 @@ const layer = Layer.effect(
             }),
           )
         if (projected.type === "existing") return projected.session
-        // TODO: Restore recorded sessions onto replacement synchronized workspaces in a future API slice.
+        // TODO(#TODO): Restore recorded sessions onto replacement synchronized workspaces in a future API slice.
         return yield* result.get(sessionID).pipe(Effect.orDie)
       }),
       get: Effect.fn("V2Session.get")(function* (sessionID) {
@@ -384,9 +384,11 @@ const layer = Layer.effect(
           }),
         ),
       ),
+      /** @deprecated Always returns OperationUnavailableError. Use prompt() instead. */
       shell: Effect.fn("V2Session.shell")(function* () {
         return yield* new OperationUnavailableError({ operation: "shell" })
       }),
+      /** @deprecated Always returns OperationUnavailableError. Use prompt() instead. */
       skill: Effect.fn("V2Session.skill")(function* () {
         return yield* new OperationUnavailableError({ operation: "skill" })
       }),
