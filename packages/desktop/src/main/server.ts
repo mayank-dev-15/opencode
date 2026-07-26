@@ -200,7 +200,7 @@ export async function checkHealth(url: string, password?: string | null): Promis
       const res = await fetch(healthUrl, {
         method: "GET",
         headers,
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(5000),
       })
       if (res.ok) return true
     } catch {}
