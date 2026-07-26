@@ -51,8 +51,6 @@ export default {
         ),
         { time, data: { ...data, event_type: "completions" } },
       ]
-      console.log(JSON.stringify(data, null, 2))
-
       const lakeIngest = getLakeIngest()
       const [honeycomb, lake] = await Promise.all([
         fetch("https://api.honeycomb.io/1/batch/zen", {
@@ -76,11 +74,11 @@ export default {
             ]
           : []),
       ])
-      console.log(honeycomb.status)
-      console.log(await honeycomb.text())
-      if (lake) {
-        console.log(lake.status)
-        console.log(await lake.text())
+      if (!honeycomb.ok) {
+        console.error(`honeycomb ingest failed: ${honeycomb.status}`)
+      }
+      if (lake && !lake.ok) {
+        console.error(`lake ingest failed: ${lake.status}`)
       }
     }
   },
