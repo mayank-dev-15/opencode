@@ -3,9 +3,15 @@ import { isRecord } from "./record"
 type ConfigIssue = { message: string; path: string[] }
 
 export function cliErrorMessage(input: unknown): string | undefined {
-  if (input instanceof Error && isRecord(input.cause) && "body" in input.cause) {
-    const formatted = cliErrorMessage(input.cause.body)
-    if (formatted) return formatted
+  if (input instanceof Error) {
+    if (input.cause instanceof Error) {
+      const formatted = cliErrorMessage(input.cause)
+      if (formatted) return formatted
+    }
+    if (isRecord(input.cause) && "body" in input.cause) {
+      const formatted = cliErrorMessage(input.cause.body)
+      if (formatted) return formatted
+    }
   }
 
   if (tagged(input, "CliError")) {
