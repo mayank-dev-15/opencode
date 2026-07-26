@@ -24,7 +24,7 @@ export interface Definition<Input extends SchemaType<any>, Output extends Schema
   }
 }
 
-export type AnyTool = Definition<any, any>
+export type AnyTool = Definition<Schema.Schema<unknown>, Schema.Schema<unknown>>
 export const Failure = ToolFailure
 export type Failure = ToolFailure
 
