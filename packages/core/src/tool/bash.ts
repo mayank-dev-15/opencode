@@ -57,6 +57,7 @@ const modelOutput = (output: Output) => {
 }
 
 const isTimeout = (error: AppProcess.AppProcessError) =>
+  (error as any)._tag === "AppProcessError" && (error as any).reason === "timeout" ||
   error.cause instanceof Error && error.cause.message === "Timed out"
 
 /**
