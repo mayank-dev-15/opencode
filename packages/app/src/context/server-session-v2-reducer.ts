@@ -402,6 +402,7 @@ export function createV2SessionReducer() {
         )
       }
       default:
+        const _exhaustive: never = event
         return
     }
   }
