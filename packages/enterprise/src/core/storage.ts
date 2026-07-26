@@ -64,23 +64,28 @@ export namespace Storage {
   }
 
   function s3(): Adapter {
-    const bucket = process.env.OPENCODE_STORAGE_BUCKET!
+    const bucket = process.env.OPENCODE_STORAGE_BUCKET
+    if (!bucket) throw new Error("OPENCODE_STORAGE_BUCKET is required for S3 adapter")
     const region = process.env.OPENCODE_STORAGE_REGION || "us-east-1"
-    const client = new AwsClient({
-      region,
-      accessKeyId: process.env.OPENCODE_STORAGE_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.OPENCODE_STORAGE_SECRET_ACCESS_KEY!,
-    })
+    const accessKeyId = process.env.OPENCODE_STORAGE_ACCESS_KEY_ID
+    if (!accessKeyId) throw new Error("OPENCODE_STORAGE_ACCESS_KEY_ID is required for S3 adapter")
+    const secretAccessKey = process.env.OPENCODE_STORAGE_SECRET_ACCESS_KEY
+    if (!secretAccessKey) throw new Error("OPENCODE_STORAGE_SECRET_ACCESS_KEY is required for S3 adapter")
+    const client = new AwsClient({ region, accessKeyId, secretAccessKey })
     return createAdapter(client, `https://s3.${region}.amazonaws.com`, bucket)
   }
 
   function r2() {
-    const accountId = process.env.OPENCODE_STORAGE_ACCOUNT_ID!
-    const client = new AwsClient({
-      accessKeyId: process.env.OPENCODE_STORAGE_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.OPENCODE_STORAGE_SECRET_ACCESS_KEY!,
-    })
-    return createAdapter(client, `https://${accountId}.r2.cloudflarestorage.com`, process.env.OPENCODE_STORAGE_BUCKET!)
+    const accountId = process.env.OPENCODE_STORAGE_ACCOUNT_ID
+    if (!accountId) throw new Error("OPENCODE_STORAGE_ACCOUNT_ID is required for R2 adapter")
+    const accessKeyId = process.env.OPENCODE_STORAGE_ACCESS_KEY_ID
+    if (!accessKeyId) throw new Error("OPENCODE_STORAGE_ACCESS_KEY_ID is required for R2 adapter")
+    const secretAccessKey = process.env.OPENCODE_STORAGE_SECRET_ACCESS_KEY
+    if (!secretAccessKey) throw new Error("OPENCODE_STORAGE_SECRET_ACCESS_KEY is required for R2 adapter")
+    const bucket = process.env.OPENCODE_STORAGE_BUCKET
+    if (!bucket) throw new Error("OPENCODE_STORAGE_BUCKET is required for R2 adapter")
+    const client = new AwsClient({ accessKeyId, secretAccessKey })
+    return createAdapter(client, `https://${accountId}.r2.cloudflarestorage.com`, bucket)
   }
 
   const adapter = lazy(() => {
