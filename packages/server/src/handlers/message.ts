@@ -20,7 +20,10 @@ const cursor = {
     return Buffer.from(JSON.stringify({ id: message.id, order, direction })).toString("base64url")
   },
   decode(input: string) {
-    return decodeCursor(JSON.parse(Buffer.from(input, "base64url").toString("utf8")))
+    return Effect.try({
+      try: () => decodeCursor(JSON.parse(Buffer.from(input, "base64url").toString("utf8"))),
+      catch: () => new InvalidCursorError({ message: "Invalid cursor" }),
+    })
   },
 }
 
@@ -33,10 +36,9 @@ export const MessageHandler = HttpApiBuilder.group(Api, "server.message", (handl
       Effect.fn(function* (ctx) {
         if (ctx.query.cursor && ctx.query.order !== undefined)
           return yield* new InvalidCursorError({ message: "Cursor cannot be combined with order" })
-        const decoded = yield* Effect.try({
-          try: () => (ctx.query.cursor ? cursor.decode(ctx.query.cursor) : undefined),
-          catch: () => new InvalidCursorError({ message: "Invalid cursor" }),
-        })
+        const decoded = ctx.query.cursor
+          ? yield* cursor.decode(ctx.query.cursor)
+          : undefined
         const order = decoded?.order ?? ctx.query.order ?? "desc"
         const messages = yield* session
           .messages({
