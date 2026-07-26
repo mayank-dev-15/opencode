@@ -86,20 +86,21 @@ const registryLayer = Layer.effect(
         const entries = Object.entries(tools)
         if (entries.length === 0) return
         yield* Effect.forEach(entries, ([name]) => validateName(name), { discard: true })
-        yield* Effect.uninterruptible(
-          Effect.gen(function* () {
-            const token = {}
+        const token = yield* Effect.uninterruptible(
+          Effect.sync(() => {
+            const t = {}
             for (const [name, tool] of entries)
-              local.set(name, [...(local.get(name) ?? []), { token, registration: { identity: {}, tool } }])
-            yield* Effect.addFinalizer(() =>
-              Effect.sync(() => {
-                for (const [name] of entries) {
-                  const registrations = local.get(name)?.filter((registration) => registration.token !== token) ?? []
-                  if (registrations.length > 0) local.set(name, registrations)
-                  else local.delete(name)
-                }
-              }),
-            )
+              local.set(name, [...(local.get(name) ?? []), { token: t, registration: { identity: {}, tool } }])
+            return t
+          }),
+        )
+        yield* Effect.addFinalizer(() =>
+          Effect.sync(() => {
+            for (const [name] of entries) {
+              const registrations = local.get(name)?.filter((r) => r.token !== token) ?? []
+              if (registrations.length > 0) local.set(name, registrations)
+              else local.delete(name)
+            }
           }),
         )
       }),
