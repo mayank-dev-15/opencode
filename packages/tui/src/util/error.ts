@@ -91,7 +91,10 @@ function configData(input: unknown, tag: string) {
 }
 
 function field(input: Record<string, unknown>, key: string) {
-  return typeof input[key] === "string" ? input[key] : undefined
+  const value = input[key]
+  if (typeof value === "string") return value
+  if (value !== undefined && value !== null) return String(value)
+  return undefined
 }
 
 export function errorFormat(error: unknown): string {
