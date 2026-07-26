@@ -28,15 +28,12 @@ function cacheKey(server: ServerConnection.HttpBase) {
 }
 
 function timeoutSignal(timeoutMs: number) {
-  const timeout = (AbortSignal as unknown as { timeout?: (ms: number) => AbortSignal }).timeout
-  if (timeout) {
-    try {
-      return {
-        signal: timeout.call(AbortSignal, timeoutMs),
-        clear: undefined as (() => void) | undefined,
-      }
-    } catch {}
-  }
+  try {
+    return {
+      signal: AbortSignal.timeout(timeoutMs),
+      clear: undefined as (() => void) | undefined,
+    }
+  } catch {}
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   return { signal: controller.signal, clear: () => clearTimeout(timer) }
