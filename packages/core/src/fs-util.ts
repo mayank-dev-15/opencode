@@ -16,7 +16,7 @@ export namespace FSUtil {
     cause: Schema.optional(Schema.Defect()),
   }) {
     override get message() {
-      const detail = this.cause instanceof Error ? this.cause.message : this.cause && String(this.cause)
+      const detail = this.cause instanceof Error ? this.cause.message : this.cause != null ? String(this.cause) : ""
       return `Filesystem operation failed: ${this.method}${detail ? `: ${detail}` : ""}`
     }
   }
@@ -248,7 +248,7 @@ export namespace FSUtil {
     const resolved = pathResolve(windowsPath(p))
     try {
       return normalizePath(realpathSync(resolved))
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e?.code === "ENOENT") return normalizePath(resolved)
       throw e
     }
