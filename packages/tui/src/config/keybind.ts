@@ -150,7 +150,7 @@ export const Definitions = {
   tool_details: keybind("none", "Toggle tool details visibility"),
   display_thinking: keybind("none", "Toggle thinking blocks visibility"),
 
-  prompt_submit: keybind("none", "Submit prompt"),
+  prompt_submit: keybind("return", "Submit prompt"),
   prompt_editor_context_clear: keybind("none", "Clear editor context"),
   prompt_skills: keybind("none", "Open skill selector"),
   prompt_stash: keybind("none", "Stash prompt"),
