@@ -36,7 +36,7 @@ function flatten(
 }
 
 function plain(input: unknown): input is Record<string, unknown> {
-  if (input === null || typeof input !== "object" || Array.isArray(input)) return false
+  if (input === null || input === undefined || typeof input !== "object" || Array.isArray(input)) return false
   const prototype = Object.getPrototypeOf(input)
   return prototype === Object.prototype || prototype === null
 }
